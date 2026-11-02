@@ -11,8 +11,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Unzip project
-        run: unzip -q marketbot-mod.zip
       - name: Build
         working-directory: marketbot-mod
         run: |
