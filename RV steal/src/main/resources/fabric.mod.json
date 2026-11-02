@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "rvsteal",
+  "version": "${version}",
+  "name": "KillerKC2 client",
+  "description": "Клиентский мод с визуальными настройками и HUD.",
+  "environment": "client",
+  "entrypoints": { "client": ["ru.rvsteal.RvSteal"] },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

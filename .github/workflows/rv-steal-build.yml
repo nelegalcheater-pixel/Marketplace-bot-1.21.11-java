@@ -1,0 +1,30 @@
+name: Build KillerKC2 client
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'RV steal/**'
+      - '.github/workflows/rv-steal-build.yml'
+  pull_request:
+    paths:
+      - 'RV steal/**'
+      - '.github/workflows/rv-steal-build.yml'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build
+        working-directory: 'RV steal'
+        run: ./gradlew build --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: killerkc2-client
+          path: |
+            RV steal/build/libs/*.jar
+            !RV steal/build/libs/*-sources.jar
+          if-no-files-found: error
