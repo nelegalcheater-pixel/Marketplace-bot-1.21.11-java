@@ -25,6 +25,9 @@ public final class RvSteal implements ClientModInitializer {
     static boolean attackMobs;
     static boolean autoSprint;
     static boolean autoRespawn;
+    public static boolean playerEsp, mobEsp;
+    static boolean playerAura, mobAura, autoTool, bunnyHop, bright;
+    static boolean healthHud;
 
     @Override public void onInitializeClient() {
         load();
@@ -51,6 +54,14 @@ public final class RvSteal implements ClientModInitializer {
             autoSprint = Boolean.parseBoolean(properties.getProperty("autoSprint", "false"));
             attackMobs = Boolean.parseBoolean(properties.getProperty("attackMobs", "false"));
             attackPlayers = Boolean.parseBoolean(properties.getProperty("attackPlayers", "false"));
+            playerEsp = Boolean.parseBoolean(properties.getProperty("playerEsp", "false"));
+            mobEsp = Boolean.parseBoolean(properties.getProperty("mobEsp", "false"));
+            playerAura = Boolean.parseBoolean(properties.getProperty("playerAura", "false"));
+            mobAura = Boolean.parseBoolean(properties.getProperty("mobAura", "false"));
+            autoTool = Boolean.parseBoolean(properties.getProperty("autoTool", "false"));
+            bunnyHop = Boolean.parseBoolean(properties.getProperty("bunnyHop", "false"));
+            bright = Boolean.parseBoolean(properties.getProperty("bright", "false"));
+            healthHud = Boolean.parseBoolean(properties.getProperty("healthHud", "false"));
         } catch (IOException e) {
             org.slf4j.LoggerFactory.getLogger("rvsteal").warn("Could not read configuration", e);
         }
@@ -64,6 +75,14 @@ public final class RvSteal implements ClientModInitializer {
         properties.setProperty("autoSprint", Boolean.toString(autoSprint));
         properties.setProperty("attackMobs", Boolean.toString(attackMobs));
         properties.setProperty("attackPlayers", Boolean.toString(attackPlayers));
+        properties.setProperty("playerEsp", Boolean.toString(playerEsp));
+        properties.setProperty("mobEsp", Boolean.toString(mobEsp));
+        properties.setProperty("playerAura", Boolean.toString(playerAura));
+        properties.setProperty("mobAura", Boolean.toString(mobAura));
+        properties.setProperty("autoTool", Boolean.toString(autoTool));
+        properties.setProperty("bunnyHop", Boolean.toString(bunnyHop));
+        properties.setProperty("bright", Boolean.toString(bright));
+        properties.setProperty("healthHud", Boolean.toString(healthHud));
         try {
             Files.createDirectories(CONFIG.getParent());
             try (OutputStream out = Files.newOutputStream(CONFIG)) { properties.store(out, "KillerKC2 client"); }

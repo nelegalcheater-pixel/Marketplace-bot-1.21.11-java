@@ -13,6 +13,7 @@ final class HudCache {
     private static final EquipmentSlot[] SLOTS = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
     private record Armor(ItemStack stack, String durability) {}
     private static String coordinates = "";
+    private static String health = "";
     private static List<String> nearby = List.of();
     private static List<Armor> armor = List.of();
     private static Object level;
@@ -28,6 +29,7 @@ final class HudCache {
         var player = client.player;
         coordinates = RvSteal.coordinatesHud ? String.format(Locale.ROOT, "XYZ: %.1f / %.1f / %.1f | FPS: %d",
                 player.getX(), player.getY(), player.getZ(), client.getFps()) : "";
+        health = RvSteal.healthHud ? String.format(Locale.ROOT, "HP: %.0f / %.0f | Food: %d", player.getHealth(), player.getMaxHealth(), player.getFoodData().getFoodLevel()) : "";
         var lines = new ArrayList<String>();
         if (RvSteal.betterNear) {
             int maxRows = Math.max(0, (client.getWindow().getGuiScaledHeight() - 84) / 10);
@@ -56,6 +58,7 @@ final class HudCache {
         var client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.level != level) return;
         if (RvSteal.coordinatesHud) graphics.drawString(client.font, coordinates, 8, 8, 0xffffffff);
+        if (RvSteal.healthHud) graphics.drawString(client.font, health, 8, RvSteal.coordinatesHud ? 19 : 8, 0xffff8c9f);
         if (RvSteal.armorHud) {
             int x = Math.max(0, graphics.guiWidth() - 80), y = 8;
             for (var item : armor) {
