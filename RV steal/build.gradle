@@ -6,6 +6,7 @@ group = 'ru.rvsteal'
 base { archivesName = 'killerkc2-client' }
 repositories { }
 dependencies {
+    testImplementation "junit:junit:4.13.2"
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"

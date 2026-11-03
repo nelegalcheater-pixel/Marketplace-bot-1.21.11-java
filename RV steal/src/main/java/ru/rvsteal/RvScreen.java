@@ -9,14 +9,20 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 final class RvScreen extends Screen {
-    private record Module(String name, String detail, BooleanSupplier get, Consumer<Boolean> set) {}
+    static record Module(String name, String detail, BooleanSupplier get, Consumer<Boolean> set) {}
     private static final String[] CATEGORIES = {"COMBAT", "PVE", "VISUAL", "UTILITY"};
     private int category;
     private int scroll;
 
     RvScreen() { super(Component.literal("KillerKC2 client")); }
 
-    private List<Module> modules() {
+    private List<Module> modules() { return categoryModules(category); }
+    static List<Module> allModules() {
+        var list = new java.util.ArrayList<Module>();
+        for (int i = 0; i < 4; i++) list.addAll(categoryModules(i));
+        return list;
+    }
+    private static List<Module> categoryModules(int category) {
         return switch (category) {
             case 0 -> List.of(
                 new Module("Player Aura", "Атака ближайшего игрока", () -> RvSteal.playerAura, v -> RvSteal.playerAura = v),
@@ -27,6 +33,8 @@ final class RvScreen extends Screen {
                 new Module("Auto Tool", "Выбор инструмента из хотбара", () -> RvSteal.autoTool, v -> RvSteal.autoTool = v),
                 new Module("Auto Respawn", "Возрождение после смерти", () -> RvSteal.autoRespawn, v -> RvSteal.autoRespawn = v));
             case 2 -> List.of(
+                new Module("Block ESP", "Выбранные блоки сквозь стены", () -> ModuleSettings.blockEsp, v -> ModuleSettings.blockEsp = v),
+                new Module("Night Vision", "Клиентское ночное зрение", () -> ModuleSettings.nightVision, v -> ModuleSettings.nightVision = v),
                 new Module("Player ESP", "Подсветка загруженных игроков", () -> RvSteal.playerEsp, v -> RvSteal.playerEsp = v),
                 new Module("Mob ESP", "Подсветка враждебных мобов", () -> RvSteal.mobEsp, v -> RvSteal.mobEsp = v),
                 new Module("Brightness", "Яркость игры на максимум", () -> RvSteal.bright, v -> RvSteal.bright = v),
@@ -54,7 +62,7 @@ final class RvScreen extends Screen {
         g.fill(x, y + 36, x + 104, y + h, 0xff11131c);
         g.drawString(font, "KILLERKC2", x + 14, y + 12, 0xffe4dbff);
         g.drawString(font, "CLIENT", x + 92, y + 12, 0xffa765fa);
-        g.drawString(font, "ESC - CLOSE", x + w - 105, y + 12, 0xff777b91);
+        g.drawString(font, "ПКМ: настройки", x + w - 105, y + 12, 0xff777b91);
         for (int i = 0; i < CATEGORIES.length; i++) {
             int ty = y + 46 + i * 27;
             if (i == category) { g.fill(x + 5, ty - 4, x + 99, ty + 17, 0xff29243c); g.fill(x + 5, ty - 4, x + 7, ty + 17, 0xffab6cff); }
@@ -78,10 +86,10 @@ final class RvScreen extends Screen {
         if (maxScroll() > 0) g.drawString(font, "Колесо мыши  " + (scroll + 1) + "/" + (maxScroll() + 1), x + 117, y + h - 12, 0xff777b91);
     }
     @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() != 0) return super.mouseClicked(event, doubleClick);
+        if (event.button() != 0 && event.button() != 1) return super.mouseClicked(event, doubleClick);
         double mx = event.x(), my = event.y();
         int x = left(), y = top();
-        if (mx >= x + 5 && mx < x + 99) {
+        if (event.button() == 0 && mx >= x + 5 && mx < x + 99) {
             for (int i = 0; i < CATEGORIES.length; i++) {
                 int ty = y + 42 + i * 27;
                 if (my >= ty && my < ty + 21) { category = i; scroll = 0; return true; }
@@ -92,6 +100,7 @@ final class RvScreen extends Screen {
                 int ry = y + 61 + i * 36;
                 if (my >= ry && my < ry + 31) {
                     Module module = modules().get(i + scroll);
+                    if (event.button() == 1) { minecraft.setScreen(new SettingsScreen(this, module)); return true; }
                     module.set().accept(!module.get().getAsBoolean());
                     RvSteal.save();
                     return true;

@@ -18,6 +18,7 @@ import java.util.Properties;
 
 public final class RvSteal implements ClientModInitializer {
     private static final Path CONFIG = FabricLoader.getInstance().getConfigDir().resolve("rvsteal.properties");
+    public static boolean nightVisionEnabled() { return ModuleSettings.nightVision; }
     static boolean betterNear;
     static boolean armorHud;
     static boolean coordinatesHud;
@@ -35,11 +36,13 @@ public final class RvSteal implements ClientModInitializer {
         var key = KeyBindingHelper.registerKeyBinding(new KeyMapping("key.rvsteal.open", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT, category));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (key.consumeClick()) if (client.screen == null) client.setScreen(new RvScreen());
+            ModuleSettings.tickBinds(client);
+            EspOverlay.tick(client);
             ClientModules.tick(client);
             HudCache.tick(client);
         });
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
-                Identifier.fromNamespaceAndPath("rvsteal", "hud"), (graphics, delta) -> HudCache.render(graphics));
+                Identifier.fromNamespaceAndPath("rvsteal", "hud"), (graphics, delta) -> { HudCache.render(graphics); EspOverlay.render(graphics, delta.getGameTimeDeltaPartialTick(false)); });
     }
 
     private static void load() {
@@ -47,6 +50,7 @@ public final class RvSteal implements ClientModInitializer {
         if (!Files.exists(CONFIG)) return;
         try (InputStream in = Files.newInputStream(CONFIG)) {
             properties.load(in);
+            ModuleSettings.load(properties);
             betterNear = Boolean.parseBoolean(properties.getProperty("betterNear", "false"));
             armorHud = Boolean.parseBoolean(properties.getProperty("armorHud", "false"));
             coordinatesHud = Boolean.parseBoolean(properties.getProperty("coordinatesHud", "false"));
@@ -83,6 +87,7 @@ public final class RvSteal implements ClientModInitializer {
         properties.setProperty("bunnyHop", Boolean.toString(bunnyHop));
         properties.setProperty("bright", Boolean.toString(bright));
         properties.setProperty("healthHud", Boolean.toString(healthHud));
+        ModuleSettings.store(properties);
         try {
             Files.createDirectories(CONFIG.getParent());
             try (OutputStream out = Files.newOutputStream(CONFIG)) { properties.store(out, "KillerKC2 client"); }

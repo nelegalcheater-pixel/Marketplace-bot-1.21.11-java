@@ -46,7 +46,7 @@ final class ClientModules {
             }
             inventory.setSelectedSlot(best);
         }
-        if (player.isUsingItem() || client.gameMode.isDestroying() || player.getAttackStrengthScale(0) < 1) return;
+        if (player.isUsingItem() || client.gameMode.isDestroying()) return;
         LivingEntity target = null;
         if (client.crosshairPickEntity instanceof LivingEntity aimed
                 && ((RvSteal.attackPlayers && aimed instanceof Player) || (RvSteal.attackMobs && aimed instanceof Enemy))) target = aimed;
@@ -62,6 +62,19 @@ final class ClientModules {
         }
         if (target != null && target != player && target.isAlive() && player.canAttack(target) && player.hasLineOfSight(target)
                 && player.distanceToSqr(target) <= player.entityInteractionRange() * player.entityInteractionRange()) {
+            boolean aura = target instanceof Player ? RvSteal.playerAura : RvSteal.mobAura;
+            boolean legit = target instanceof Player ? ModuleSettings.playerLegit : ModuleSettings.mobLegit;
+            if (aura && legit) {
+                var offset = target.getEyePosition().subtract(player.getEyePosition());
+                float yaw = (float) Math.toDegrees(Math.atan2(offset.z, offset.x)) - 90;
+                float pitch = (float) -Math.toDegrees(Math.atan2(offset.y, Math.sqrt(offset.x * offset.x + offset.z * offset.z)));
+                float yawStep = net.minecraft.util.Mth.wrapDegrees(yaw - player.getYRot());
+                float pitchStep = pitch - player.getXRot();
+                player.setYRot(player.getYRot() + Math.clamp(yawStep, -10f, 10f));
+                player.setXRot(Math.clamp(player.getXRot() + Math.clamp(pitchStep, -8f, 8f), -90f, 90f));
+                if (Math.abs(yawStep) > 12 || Math.abs(pitchStep) > 10) return;
+            }
+            if (player.getAttackStrengthScale(0) < 1) return;
             client.gameMode.attack(player, target);
             player.swing(InteractionHand.MAIN_HAND);
         }
