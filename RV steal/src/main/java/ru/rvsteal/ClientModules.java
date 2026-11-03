@@ -11,9 +11,14 @@ import net.minecraft.world.phys.BlockHitResult;
 
 final class ClientModules {
     static LivingEntity target;
+    private static LivingEntity previousAuraTarget;
     private static int deathTicks, totemCooldown;
     private static Double previousGamma;
 
+    static void suspend(Minecraft client) {
+        if (previousGamma != null && client.options.gamma().get().equals(1.0)) client.options.gamma().set(previousGamma);
+        previousGamma = null; target = null; previousAuraTarget = null;
+    }
     static void tick(Minecraft client) {
         target = null;
         if (RvSteal.bright && previousGamma == null) {
@@ -24,7 +29,7 @@ final class ClientModules {
             previousGamma = null;
         }
         var player = client.player;
-        if (player == null || client.level == null) { deathTicks = 0; return; }
+        if (player == null || client.level == null) { deathTicks = 0; previousAuraTarget = null; return; }
         if (RvSteal.autoRespawn && client.screen instanceof DeathScreen) {
             if (++deathTicks == 20) player.respawn();
         } else deathTicks = 0;
@@ -64,6 +69,13 @@ final class ClientModules {
                 && ((RvSteal.attackPlayers && aimed instanceof Player) || (RvSteal.attackMobs && aimed instanceof Enemy))) target = aimed;
         if (target == null && (RvSteal.playerAura || RvSteal.mobAura)) {
             double closest = player.entityInteractionRange() * player.entityInteractionRange();
+            if (previousAuraTarget != null && previousAuraTarget.isAlive() && !previousAuraTarget.isRemoved()
+                    && player.canAttack(previousAuraTarget) && player.hasLineOfSight(previousAuraTarget)
+                    && player.distanceToSqr(previousAuraTarget) <= closest
+                    && ((RvSteal.playerAura && previousAuraTarget instanceof Player) || (RvSteal.mobAura && previousAuraTarget instanceof Enemy))) {
+                target = previousAuraTarget;
+            }
+            if (target == null)
             for (var entity : client.level.entitiesForRendering()) {
                 if (!(entity instanceof LivingEntity candidate) || candidate == player
                         || !candidate.isAlive() || !player.canAttack(candidate) || !player.hasLineOfSight(candidate)
@@ -72,6 +84,7 @@ final class ClientModules {
                 if (distance <= closest) { closest = distance; target = candidate; }
             }
         }
+        previousAuraTarget = target;
         if (target != null && target != player && target.isAlive() && player.canAttack(target) && player.hasLineOfSight(target)
                 && player.distanceToSqr(target) <= player.entityInteractionRange() * player.entityInteractionRange()) {
             boolean aura = target instanceof Player ? RvSteal.playerAura : RvSteal.mobAura;
@@ -82,8 +95,8 @@ final class ClientModules {
                 float pitch = (float) -Math.toDegrees(Math.atan2(offset.y, Math.sqrt(offset.x * offset.x + offset.z * offset.z)));
                 float yawStep = net.minecraft.util.Mth.wrapDegrees(yaw - player.getYRot());
                 float pitchStep = pitch - player.getXRot();
-                player.setYRot(player.getYRot() + Math.clamp(yawStep, -10f, 10f));
-                player.setXRot(Math.clamp(player.getXRot() + Math.clamp(pitchStep, -8f, 8f), -90f, 90f));
+                player.setYRot(player.getYRot() + Math.clamp(yawStep * .25f, -4f, 4f));
+                player.setXRot(Math.clamp(player.getXRot() + Math.clamp(pitchStep * .25f, -3f, 3f), -90f, 90f));
                 if (Math.abs(yawStep) > 12 || Math.abs(pitchStep) > 10) return;
             }
             if (player.getAttackStrengthScale(0) < 1) return;

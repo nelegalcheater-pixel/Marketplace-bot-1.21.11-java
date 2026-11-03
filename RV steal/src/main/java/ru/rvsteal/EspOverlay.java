@@ -160,7 +160,7 @@ final class EspOverlay {
             }
             label(g, "Block ESP: " + found.size() + "/512 | " + ModuleSettings.blockRange + " m | "
                     + (selected.isEmpty() ? "проверь ID блоков" : "поиск " + (scanOffsets.isEmpty() ? 0 : cursor * 100 / scanOffsets.size()) + "%"),
-                    6, g.guiHeight() - 60, 0xff000000 | ModuleSettings.blockColor, true);
+                    HudLayout.x("Block ESP", g.guiWidth(), 6), HudLayout.y("Block ESP", g.guiHeight(), g.guiHeight() - 60), 0xff000000 | ModuleSettings.blockColor, true);
         }
         if (ModuleSettings.itemEsp) {
             int items = 0;

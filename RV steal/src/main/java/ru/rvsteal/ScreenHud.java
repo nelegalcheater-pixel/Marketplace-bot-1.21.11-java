@@ -48,20 +48,21 @@ final class ScreenHud {
         if (c.player == null || c.level == null || c.options.hideGui) return;
         if (ModuleSettings.watermark) {
             int w = Math.min(g.guiWidth() - 16, c.font.width(watermark) + 16);
-            Ui.round(g, 8, 8, w, 20, 6, 0xc0192029);
-            g.drawString(c.font, c.font.plainSubstrByWidth(watermark, w - 12), 14, 14, 0xffd8d2f4);
+            int x = HudLayout.x("Watermark", g.guiWidth(), 8), y = HudLayout.y("Watermark", g.guiHeight(), 8);
+            Ui.round(g, x, y, w, 20, 6, 0xc0192029);
+            g.drawString(c.font, c.font.plainSubstrByWidth(watermark, w - 12), x + 6, y + 6, 0xffd8d2f4);
         }
-        leftBottom = 72;
-        if (ModuleSettings.hotkeysHud) { panel(g, "Hotkeys", hotkeys, 8, leftBottom); leftBottom += 30 + Math.min(5, hotkeys.size()) * 12; }
-        if (ModuleSettings.potionsHud) { panel(g, "Potions", potions, 8, leftBottom); leftBottom += 30 + Math.min(5, potions.size()) * 12; }
-        if (ModuleSettings.staffHud) panel(g, "Staffs [TAB rank]", staffs, Math.max(8, g.guiWidth() - 188), 72);
+        leftBottom = 80;
+        if (ModuleSettings.hotkeysHud) { panel(g, "Hotkeys", hotkeys, HudLayout.x("Hotkeys", g.guiWidth(), 8), HudLayout.y("Hotkeys", g.guiHeight(), leftBottom)); leftBottom += 30 + Math.min(5, hotkeys.size()) * 12; }
+        if (ModuleSettings.potionsHud) { panel(g, "Potions", potions, HudLayout.x("Potions", g.guiWidth(), 8), HudLayout.y("Potions", g.guiHeight(), leftBottom)); leftBottom += 30 + Math.min(5, potions.size()) * 12; }
+        if (ModuleSettings.staffHud) panel(g, "Staffs [TAB rank]", staffs, HudLayout.x("Staffs", g.guiWidth(), Math.max(8, g.guiWidth() - 188)), HudLayout.y("Staffs", g.guiHeight(), 72));
         if (ModuleSettings.targetHud) renderTarget(g, c);
     }
     private static void renderTarget(GuiGraphics g, Minecraft c) {
         var target = ClientModules.target;
         if (target == null && c.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity entity) target = entity;
         if (target == null || target.isRemoved() || !target.isAlive()) return;
-        int x = Math.max(4, g.guiWidth() / 2 + 20), y = Math.max(4, g.guiHeight() / 2 + 20);
+        int x = HudLayout.x("Target", g.guiWidth(), g.guiWidth() / 2 + 20), y = HudLayout.y("Target", g.guiHeight(), g.guiHeight() / 2 + 20);
         int w = Math.min(150, g.guiWidth() - x - 4);
         if (w < 40 || y + 62 > g.guiHeight()) return;
         Ui.round(g, x, y, w, 60, 6, 0xd0192029);

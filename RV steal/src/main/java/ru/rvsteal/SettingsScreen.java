@@ -52,6 +52,9 @@ final class SettingsScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal(binding ? "Нажми клавишу; Esc — отмена" : "Бинд: " + keyName()), b -> { binding = true; rebuildWidgets(); })
                 .bounds(x, y + 24, 260, 20).build());
         String name = module.name();
+        if (name.equals("Hitboxes")) {
+            button("Добавить к каждой стороне: " + String.format(Locale.ROOT, "%.1f", ModuleSettings.hitboxSize / 100.0) + " блоков", () -> ModuleSettings.hitboxSize = ModuleSettings.hitboxSize >= 300 ? 0 : ModuleSettings.hitboxSize + 10);
+        }
         if (name.equals("Player Aura") || name.equals("Mob Aura")) {
             boolean player = name.equals("Player Aura");
             boolean legit = player ? ModuleSettings.playerLegit : ModuleSettings.mobLegit;
@@ -136,7 +139,7 @@ final class SettingsScreen extends Screen {
         int key = event.key();
         if (key == GLFW.GLFW_KEY_ESCAPE) { binding = false; rebuildWidgets(); return true; }
         if (key == GLFW.GLFW_KEY_DELETE || key == GLFW.GLFW_KEY_BACKSPACE) ModuleSettings.binds.remove(module.name());
-        else if (key >= 32 && key <= GLFW.GLFW_KEY_LAST && key != GLFW.GLFW_KEY_RIGHT_SHIFT) {
+        else if (key >= 32 && key <= GLFW.GLFW_KEY_LAST && key != GLFW.GLFW_KEY_RIGHT_SHIFT && key != GLFW.GLFW_KEY_F7) {
             ModuleSettings.binds.put(module.name(), key);
         } else return true;
         binding = false; RvSteal.save(); rebuildWidgets(); return true;

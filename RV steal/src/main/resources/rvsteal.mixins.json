@@ -2,6 +2,6 @@
   "required": true,
   "package": "ru.rvsteal.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["GameRendererAccess", "NightVisionMixin", "NightVisionScaleMixin", "WorldColorMixin", "HurtCameraMixin"],
+  "client": ["GameRendererAccess", "NightVisionMixin", "NightVisionScaleMixin", "WorldColorMixin", "HurtCameraMixin", "HitboxPickMixin", "ItemPhysicsMixin"],
   "injectors": { "defaultRequire": 1 }
 }

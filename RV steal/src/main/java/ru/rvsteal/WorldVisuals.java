@@ -9,7 +9,7 @@ import net.minecraft.world.attribute.EnvironmentAttributes;
 public final class WorldVisuals {
     private WorldVisuals() {}
     public static Integer color(EnvironmentAttribute<?> attribute) {
-        if (!AccessKey.unlocked() || !ModuleSettings.worldTheme) return null;
+        if (!RvSteal.active() || !ModuleSettings.worldTheme) return null;
         if (attribute == EnvironmentAttributes.SKY_COLOR) return ModuleSettings.skyColor;
         if (attribute == EnvironmentAttributes.FOG_COLOR) return ModuleSettings.fogColor;
         if (attribute == EnvironmentAttributes.CLOUD_COLOR) return 0xff000000 | ModuleSettings.cloudColor;

@@ -15,7 +15,8 @@ final class ModuleSettings {
     static final Esp players = new Esp(), mobs = new Esp();
     static boolean playerLegit = true, mobLegit = true, blockEsp, nightVision;
     static boolean watermark = true, hotkeysHud = true, potionsHud = true, staffHud = true;
-    static boolean worldTheme, ambientParticles, itemEsp, autoTotem, noHurtCam, targetHud;
+    static boolean worldTheme, ambientParticles, itemEsp, autoTotem, noHurtCam, targetHud, hitboxes, pearlTrails, itemPhysics;
+    static int hitboxSize = 30;
     static int skyColor = 0x9385da, fogColor = 0xc4adeb, cloudColor = 0xffd5ed;
     static int particleStyle, particleDensity = 2, blockColor = 0x65e5e1;
     static int blockRange = 16;
@@ -25,6 +26,10 @@ final class ModuleSettings {
 
     static void load(Properties p) {
         binds.clear();
+        pearlTrails = Boolean.parseBoolean(p.getProperty("pearlTrails", "false"));
+        itemPhysics = Boolean.parseBoolean(p.getProperty("itemPhysics", "false"));
+        hitboxes = Boolean.parseBoolean(p.getProperty("hitboxes", "false"));
+        hitboxSize = number(p, "hitboxSize", 30, 0, 300);
         targetHud = Boolean.parseBoolean(p.getProperty("targetHud", "false"));
         noHurtCam = Boolean.parseBoolean(p.getProperty("noHurtCam", "false"));
         autoTotem = Boolean.parseBoolean(p.getProperty("autoTotem", "false"));
@@ -69,7 +74,7 @@ final class ModuleSettings {
         }
         for (String key : p.stringPropertyNames()) if (key.startsWith("bind.")) {
             int value = number(p, key, -1, -1, 348);
-            if (value >= 32) binds.put(key.substring(5), value);
+            if (value >= 32 && value != org.lwjgl.glfw.GLFW.GLFW_KEY_F7 && value != org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT) binds.put(key.substring(5), value);
         }
     }
     private static int number(Properties p, String key, int fallback, int min, int max) {
@@ -83,6 +88,8 @@ final class ModuleSettings {
     }
     static String hex(int color) { return String.format(Locale.ROOT, "%06X", color & 0xffffff); }
     static void store(Properties p) {
+        p.setProperty("pearlTrails", "" + pearlTrails); p.setProperty("itemPhysics", "" + itemPhysics);
+        p.setProperty("hitboxes", "" + hitboxes); p.setProperty("hitboxSize", "" + hitboxSize);
         p.setProperty("targetHud", "" + targetHud);
         p.setProperty("noHurtCam", "" + noHurtCam);
         p.setProperty("autoTotem", "" + autoTotem);

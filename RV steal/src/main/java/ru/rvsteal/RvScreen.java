@@ -31,6 +31,7 @@ final class RvScreen extends Screen {
     private static List<Module> categoryModules(int category) {
         return switch (category) {
             case 0 -> List.of(
+                new Module("Hitboxes", "Увеличение области прицеливания игроков", () -> ModuleSettings.hitboxes, v -> ModuleSettings.hitboxes = v),
                 new Module("Auto Totem", "Тотем из инвентаря во вторую руку", () -> ModuleSettings.autoTotem, v -> ModuleSettings.autoTotem = v),
                 new Module("Player Aura", "Атака ближайшего игрока", () -> RvSteal.playerAura, v -> RvSteal.playerAura = v),
                 new Module("Trigger PvP", "Атака игрока под прицелом", () -> RvSteal.attackPlayers, v -> RvSteal.attackPlayers = v));
@@ -44,6 +45,8 @@ final class RvScreen extends Screen {
                 new Module("Hotkeys HUD", "Включённые модули с биндом", () -> ModuleSettings.hotkeysHud, v -> ModuleSettings.hotkeysHud = v),
                 new Module("Potions HUD", "Активные эффекты и время", () -> ModuleSettings.potionsHud, v -> ModuleSettings.potionsHud = v),
                 new Module("Staffs HUD", "Ранги staff/admin/mod из TAB", () -> ModuleSettings.staffHud, v -> ModuleSettings.staffHud = v),
+                new Module("Throw Trails", "Следы жемчуга, зелий и других бросков", () -> ModuleSettings.pearlTrails, v -> ModuleSettings.pearlTrails = v),
+                new Module("Item Physics", "Предметы лежат на земле", () -> ModuleSettings.itemPhysics, v -> ModuleSettings.itemPhysics = v),
                 new Module("Target HUD", "Здоровье, броня и эффекты цели", () -> ModuleSettings.targetHud, v -> ModuleSettings.targetHud = v),
                 new Module("No Hurt Cam", "Отключает качание камеры при уроне", () -> ModuleSettings.noHurtCam, v -> ModuleSettings.noHurtCam = v),
                 new Module("World Theme", "Цвета неба, облаков и тумана", () -> ModuleSettings.worldTheme, v -> ModuleSettings.worldTheme = v),
@@ -94,8 +97,10 @@ final class RvScreen extends Screen {
             if (category == i) Ui.round(g, x + 7, ty - 5, side - 14, 23, 5, 0xff0f1419);
             g.drawString(font, names[i], x + 15, ty + 1, category == i ? 0xfff1f1fa : 0xff929aa6);
         }
-        g.drawString(font, "KillerKC2", x + 12, y + h - 31, 0xffe5e1f8);
-        g.drawString(font, "ADMIN / lifetime", x + 12, y + h - 18, 0xff8c83bd);
+        g.drawString(font, "HUD editor", x + 12, y + h - 72, 0xffd9bdff);
+        g.drawString(font, "Configs", x + 12, y + h - 53, 0xffd9bdff);
+        g.drawString(font, "Hide client", x + 12, y + h - 34, 0xffffa5b1);
+        g.drawString(font, "5x F7: вернуть", x + 12, y + h - 18, 0xff8c83bd);
         Ui.round(g, x + side + 7, y + 6, w - side - 14, 25, 7, 0xff171d23);
         var list = modules();
         for (int row = 0; row < visibleRows(); row++) for (int col = 0; col < columns(); col++) {
@@ -120,6 +125,9 @@ final class RvScreen extends Screen {
         if (event.button() != 0 && event.button() != 1) return false;
         int x = left(), y = top();
         if (event.button() == 0 && event.x() >= x + 7 && event.x() < x + sidebar() - 7) {
+            if (event.y() >= y + panelHeight() - 77 && event.y() < y + panelHeight() - 59) { minecraft.setScreen(new HudEditorScreen(this)); return true; }
+            if (event.y() >= y + panelHeight() - 58 && event.y() < y + panelHeight() - 40) { minecraft.setScreen(new ConfigShareScreen(this)); return true; }
+            if (event.y() >= y + panelHeight() - 39 && event.y() < y + panelHeight() - 21) { RvSteal.hide(); return true; }
             for (int i = 0; i < 4; i++) if (event.y() >= y + 55 + i * 29 && event.y() < y + 78 + i * 29) {
                 category = i; scroll = 0; search.setValue(""); return true;
             }

@@ -57,10 +57,10 @@ final class HudCache {
     static void render(GuiGraphics graphics) {
         var client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.level != level) return;
-        if (RvSteal.coordinatesHud) graphics.drawString(client.font, coordinates, 8, 35, 0xffffffff);
-        if (RvSteal.healthHud) graphics.drawString(client.font, health, 8, RvSteal.coordinatesHud ? 46 : 35, 0xffff8c9f);
+        if (RvSteal.coordinatesHud) graphics.drawString(client.font, coordinates, HudLayout.x("Coordinates", graphics.guiWidth(), 8), HudLayout.y("Coordinates", graphics.guiHeight(), 35), 0xffffffff);
+        if (RvSteal.healthHud) graphics.drawString(client.font, health, HudLayout.x("Health", graphics.guiWidth(), 8), HudLayout.y("Health", graphics.guiHeight(), 55), 0xffff8c9f);
         if (RvSteal.armorHud) {
-            int x = Math.max(0, graphics.guiWidth() - 80), y = 8;
+            int x = HudLayout.x("Armor", graphics.guiWidth(), Math.max(0, graphics.guiWidth() - 90)), y = HudLayout.y("Armor", graphics.guiHeight(), 8);
             for (var item : armor) {
                 graphics.renderItem(item.stack(), x, y);
                 graphics.drawString(client.font, item.durability(), x + 19, y + 4, 0xffffffff);
@@ -68,13 +68,13 @@ final class HudCache {
             }
         }
         if (RvSteal.betterNear) {
-            int y = ScreenHud.leftBottom();
+            int x = HudLayout.x("Better Near", graphics.guiWidth(), 8), y = HudLayout.y("Better Near", graphics.guiHeight(), 140);
             if (y > graphics.guiHeight() - 24) return;
-            graphics.drawString(client.font, "Better Near", 8, y, 0xffff6c24);
+            graphics.drawString(client.font, "Better Near", x, y, 0xffff6c24);
             y += 12;
             for (String line : nearby) {
                 if (y > graphics.guiHeight() - 40) break;
-                graphics.drawString(client.font, line, 8, y, 0xffffffff);
+                graphics.drawString(client.font, line, x, y, 0xffffffff);
                 y += 10;
             }
         }
