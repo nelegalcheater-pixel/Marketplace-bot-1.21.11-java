@@ -53,6 +53,7 @@ public final class RvSteal implements ClientModInitializer {
             if (!active()) return;
             ScreenHud.tick(client);
             ModuleSettings.tickBinds(client);
+            UserScripts.tick(client);
             EspOverlay.tick(client);
             PearlTrails.tick(client);
             ClientModules.tick(client);

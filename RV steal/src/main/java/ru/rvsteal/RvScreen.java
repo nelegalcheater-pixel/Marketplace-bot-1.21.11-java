@@ -33,7 +33,7 @@ final class RvScreen extends Screen {
     }
     static List<Module> allModules() {
         var list = new java.util.ArrayList<Module>(baseModules());
-        list.addAll(CustomFunctions.modules()); return list;
+        list.addAll(CustomFunctions.modules()); list.addAll(UserScripts.modules()); return list;
     }
     private static List<Module> categoryModules(int category) {
         return switch (category) {
@@ -73,10 +73,11 @@ final class RvScreen extends Screen {
                 new Module("Armor HUD", "Броня и прочность", () -> RvSteal.armorHud, v -> RvSteal.armorHud = v),
                 new Module("XYZ / FPS", "Координаты и частота кадров", () -> RvSteal.coordinatesHud, v -> RvSteal.coordinatesHud = v),
                 new Module("Health HUD", "Здоровье и голод", () -> RvSteal.healthHud, v -> RvSteal.healthHud = v));
-            case 6 -> CustomFunctions.modules();
+            case 6 -> { var list = new java.util.ArrayList<Module>(CustomFunctions.modules()); list.addAll(UserScripts.modules()); yield list; }
             default -> List.of(new Module("Configs", "Профили и обмен", () -> false, v -> {}),
                 new Module("HUD editor", "Расположение виджетов", () -> false, v -> {}),
-                new Module("Function builder", "Создание функций", () -> false, v -> {}));
+                new Module("Function builder", "Создание функций", () -> false, v -> {}),
+                new Module("Script editor", "Программирование Lua", () -> false, v -> {}));
         };
     }
     private int panelWidth() { return Math.min(540, width - 8); }
@@ -153,6 +154,7 @@ final class RvScreen extends Screen {
             if (module.name().equals("Configs")) { minecraft.setScreen(new ConfigShareScreen(this)); return true; }
             if (module.name().equals("HUD editor")) { minecraft.setScreen(new HudEditorScreen(this)); return true; }
             if (module.name().equals("Function builder")) { minecraft.setScreen(new FunctionBuilderScreen(this)); return true; }
+            if (module.name().equals("Script editor")) { minecraft.setScreen(new ScriptEditorScreen(this)); return true; }
             if (event.button() == 1) minecraft.setScreen(new SettingsScreen(this, module));
             else { module.set().accept(!module.get().getAsBoolean()); RvSteal.save(); }
             return true;

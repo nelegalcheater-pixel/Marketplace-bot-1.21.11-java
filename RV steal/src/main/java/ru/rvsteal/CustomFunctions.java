@@ -16,7 +16,7 @@ final class CustomFunctions {
     static Function parse(String name, String text) {
         name = name.trim();
         if (name.isEmpty() || name.length() > 32 || name.contains(".") || name.contains("\n")) throw new IllegalArgumentException("Название: 1–32 символа без точки");
-        if (Set.of("Configs", "HUD editor", "Function builder").contains(name)) throw new IllegalArgumentException("Название занято");
+        if (Set.of("Configs", "HUD editor", "Function builder", "Script editor").contains(name)) throw new IllegalArgumentException("Название занято");
         var actions = new ArrayList<String>();
         for (String part : text.split(";", -1)) {
             String action = part.trim().toLowerCase(Locale.ROOT).replaceFirst("^(включить|переключать|управлять)\\s+", "");
@@ -31,7 +31,7 @@ final class CustomFunctions {
     static void create(String name, String text) {
         Function f = parse(name, text);
         if (functions.size() >= 24 && !functions.containsKey(f.name())) throw new IllegalArgumentException("Не более 24 функций");
-        if (RvScreen.baseModules().stream().anyMatch(m -> m.name().equalsIgnoreCase(f.name()))) throw new IllegalArgumentException("Название занято модулем");
+        if (RvScreen.baseModules().stream().anyMatch(m -> m.name().equalsIgnoreCase(f.name())) || UserScripts.scripts.keySet().stream().anyMatch(n -> n.equalsIgnoreCase(f.name()))) throw new IllegalArgumentException("Название занято модулем");
         functions.put(f.name(), f);
     }
     static List<RvScreen.Module> modules() {

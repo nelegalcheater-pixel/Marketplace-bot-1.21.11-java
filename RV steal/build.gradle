@@ -4,9 +4,10 @@ plugins {
 version = project.mod_version
 group = 'ru.rvsteal'
 base { archivesName = 'killerkc2-client' }
-repositories { }
+repositories { mavenCentral() }
 dependencies {
     testImplementation "junit:junit:4.13.2"
+    implementation include("org.luaj:luaj-jse:3.0.1")
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"

@@ -27,6 +27,7 @@ final class ModuleSettings {
     static void load(Properties p) {
         binds.clear();
         CustomFunctions.load(p);
+        UserScripts.load(p);
         pearlTrails = Boolean.parseBoolean(p.getProperty("pearlTrails", "false"));
         itemPhysics = Boolean.parseBoolean(p.getProperty("itemPhysics", "false"));
         hitboxes = Boolean.parseBoolean(p.getProperty("hitboxes", "false"));
@@ -90,6 +91,7 @@ final class ModuleSettings {
     static String hex(int color) { return String.format(Locale.ROOT, "%06X", color & 0xffffff); }
     static void store(Properties p) {
         CustomFunctions.store(p);
+        UserScripts.store(p);
         p.setProperty("pearlTrails", "" + pearlTrails); p.setProperty("itemPhysics", "" + itemPhysics);
         p.setProperty("hitboxes", "" + hitboxes); p.setProperty("hitboxSize", "" + hitboxSize);
         p.setProperty("targetHud", "" + targetHud);
