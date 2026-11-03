@@ -28,11 +28,11 @@ tasks.register('launcherAssets') {
     doLast {
         copy {
             from tasks.named('remapJar').get().archiveFile
-            into '../launcher/assets'
+            into 'launcher/assets'
             rename { 'killerkc2-client.jar' }
         }
         def api = configurations.modImplementation.files.find { it.name == "fabric-api-${project.fabric_api_version}.jar" }
         if (api == null) throw new GradleException('Fabric API artifact not found')
-        copy { from api; into '../launcher/assets'; rename { 'fabric-api-killerkc2.jar' } }
+        copy { from api; into 'launcher/assets'; rename { 'fabric-api-killerkc2.jar' } }
     }
 }

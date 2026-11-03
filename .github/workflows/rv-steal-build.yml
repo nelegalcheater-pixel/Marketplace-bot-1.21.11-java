@@ -4,12 +4,10 @@ on:
   push:
     paths:
       - 'RV steal/**'
-      - 'launcher/**'
       - '.github/workflows/rv-steal-build.yml'
   pull_request:
     paths:
       - 'RV steal/**'
-      - 'launcher/**'
       - '.github/workflows/rv-steal-build.yml'
 jobs:
   build:
@@ -25,7 +23,7 @@ jobs:
           go-version: '1.25.3'
           cache: false
       - name: Build
-        run: bash launcher/build.sh
+        run: bash 'RV steal/launcher/build.sh'
       - uses: actions/upload-artifact@v4
         with:
           name: killerkc2-client
@@ -36,5 +34,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: killerkc2-windows-launcher
-          path: launcher/KillerKC2-Launcher.exe
+          path: RV steal/launcher/KillerKC2-Launcher.exe
           if-no-files-found: error

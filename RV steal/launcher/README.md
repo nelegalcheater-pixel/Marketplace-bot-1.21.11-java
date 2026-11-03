@@ -19,7 +19,13 @@ EXE не содержит Minecraft, не устанавливает Fabric Load
 Нужны Java 21, Go 1.25.3 и доступ к Maven/Fabric репозиториям. Из корня репозитория:
 
 ```sh
-bash launcher/build.sh
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:fc923b7e5c7bb9947ac175208246418a9edcee0ca1643baee15cbbd1e0ef0f55 -->
+
+bash 'RV steal/launcher/build.sh'
+
+<!-- /coderabbit-ai-generated:v1 -->
 ```
 
 Скрипт собирает мод и тесты, копирует JAR и Fabric API в assets, запускает Go-тесты и компилирует Windows EXE. GitHub Actions `Build KillerKC2 client` публикует `killerkc2-client` и `killerkc2-windows-launcher`.
