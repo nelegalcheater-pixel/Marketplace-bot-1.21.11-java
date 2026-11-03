@@ -8,14 +8,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,8 +26,13 @@ import (
 var assets embed.FS
 
 type request struct {
-	Launcher string `json:"launcher"`
+	Nickname string `json:"nickname"`
+	Java     string `json:"java"`
 }
+
+var gameMu sync.Mutex
+var gameStatus = "Готово к запуску"
+var gameBusy bool
 
 func install(root string) error {
 	dir := filepath.Join(root, "mods")
@@ -151,38 +159,117 @@ func handler(token, root string, preview bool) http.Handler {
 		}
 		json.NewEncoder(w).Encode(map[string]string{"message": "Мод установлен в " + filepath.Join(root, "mods") + ". Выберите Fabric 1.21.11 в Minecraft Launcher. Совместимый Fabric API сохранён, старые копии KillerKC2 заменены."})
 	})
+
+	mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		gameMu.Lock()
+		defer gameMu.Unlock()
+		json.NewEncoder(w).Encode(map[string]any{"message": gameStatus, "busy": gameBusy})
+	})
+	mux.HandleFunc("/api/upload", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" || r.Header.Get("X-KillerKC2-Token") != token {
+			http.Error(w, "Forbidden", 403)
+			return
+		}
+		if preview {
+			http.Error(w, "Предпросмотр: загрузка отключена", 409)
+			return
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 100<<20)
+		if err := r.ParseMultipartForm(8 << 20); err != nil {
+			http.Error(w, "Файл слишком большой или повреждён", 400)
+			return
+		}
+		if r.MultipartForm != nil {
+			defer r.MultipartForm.RemoveAll()
+		}
+		src, header, err := r.FormFile("mod")
+		if err != nil {
+			http.Error(w, "Выберите JAR", 400)
+			return
+		}
+		defer src.Close()
+		name := header.Filename
+		if name != filepath.Base(name) || !strings.EqualFold(filepath.Ext(name), ".jar") || strings.ContainsAny(name, `/\:`) {
+			http.Error(w, "Допустим только файл .jar", 400)
+			return
+		}
+		dir := filepath.Join(root, "mods")
+		if err = os.MkdirAll(dir, 0755); err != nil {
+			http.Error(w, "Не удалось открыть папку mods", 500)
+			return
+		}
+		tmp, err := os.CreateTemp(dir, ".upload-*")
+		if err != nil {
+			http.Error(w, "Не удалось сохранить файл", 500)
+			return
+		}
+		defer os.Remove(tmp.Name())
+		_, err = io.Copy(tmp, src)
+		if e := tmp.Close(); err == nil {
+			err = e
+		}
+		if err != nil {
+			http.Error(w, "Ошибка загрузки", 500)
+			return
+		}
+		z, err := zip.OpenReader(tmp.Name())
+		if err != nil {
+			http.Error(w, "Это не JAR архив", 400)
+			return
+		}
+		z.Close()
+		dest := filepath.Join(dir, name)
+		if err = os.Link(tmp.Name(), dest); err != nil {
+			http.Error(w, "Файл уже существует или его нельзя записать", 409)
+			return
+		}
+		fmt.Fprint(w, "Мод добавлен: "+name)
+	})
 	mux.HandleFunc("/api/launch", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" || r.Header.Get("X-KillerKC2-Token") != token {
 			http.Error(w, "Forbidden", 403)
 			return
 		}
-		if preview || runtime.GOOS != "windows" {
-			http.Error(w, "Запуск доступен в Windows-версии", 409)
+		if preview {
+			http.Error(w, "Предпросмотр: запуск отключён", 409)
 			return
 		}
 		var input request
-		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&input); err != nil {
+		if json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&input) != nil {
 			http.Error(w, "Неверный запрос", 400)
 			return
 		}
-		path := strings.TrimSpace(input.Launcher)
-		if path == "" {
-			path = filepath.Join(os.Getenv("ProgramFiles(x86)"), "Minecraft Launcher", "MinecraftLauncher.exe")
-		}
-		if !filepath.IsAbs(path) || !strings.EqualFold(filepath.Ext(path), ".exe") {
-			http.Error(w, "Укажите полный путь к MinecraftLauncher.exe", 400)
+		if !regexp.MustCompile(`^[A-Za-z0-9_]{3,16}$`).MatchString(input.Nickname) {
+			http.Error(w, "Ник: 3–16 латинских букв, цифр или _", 400)
 			return
 		}
-		if _, err := os.Stat(path); err != nil {
-			http.Error(w, "Лаунчер не найден. Укажите путь к установленному MinecraftLauncher.exe.", 400)
+		gameMu.Lock()
+		if gameBusy {
+			gameMu.Unlock()
+			http.Error(w, "Запуск уже выполняется", 409)
 			return
 		}
-		if err := exec.Command(path).Start(); err != nil {
-			http.Error(w, "Не удалось запустить Minecraft Launcher", 500)
-			return
-		}
-		fmt.Fprint(w, "Minecraft Launcher запущен. Выберите профиль Fabric 1.21.11.")
+		gameBusy = true
+		gameStatus = "Загрузка файлов игры и запуск. Первый запуск может занять несколько минут."
+		gameMu.Unlock()
+		go func() {
+			cmd, err := prepare(root, input.Nickname, strings.TrimSpace(input.Java))
+			if err == nil {
+				err = cmd.Start()
+			}
+			gameMu.Lock()
+			defer gameMu.Unlock()
+			gameBusy = false
+			if err != nil {
+				gameStatus = "Ошибка: " + err.Error()
+			} else {
+				gameStatus = "Игра запущена"
+				go cmd.Wait()
+			}
+		}()
+		json.NewEncoder(w).Encode(map[string]string{"message": "Загрузка файлов игры и запуск. Первый запуск может занять несколько минут."})
 	})
+
 	return mux
 }
 func main() {

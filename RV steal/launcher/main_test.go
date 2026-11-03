@@ -2,7 +2,9 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -101,5 +103,47 @@ func TestRejectsIncompatibleAPIAndNameCollision(t *testing.T) {
 		if string(before) != string(after) {
 			t.Fatal("conflict was overwritten")
 		}
+	}
+}
+
+func TestUploadMod(t *testing.T) {
+	root := t.TempDir()
+	fixtures := t.TempDir()
+	fixtureMod(t, fixtures, "sample.jar", "sample", "1")
+	data, err := os.ReadFile(filepath.Join(fixtures, "sample.jar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(name, token string, data []byte) *httptest.ResponseRecorder {
+		var body bytes.Buffer
+		m := multipart.NewWriter(&body)
+		f, err := m.CreateFormFile("mod", name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.Write(data)
+		m.Close()
+		req := httptest.NewRequest("POST", "/api/upload", &body)
+		req.Header.Set("Content-Type", m.FormDataContentType())
+		req.Header.Set("X-KillerKC2-Token", token)
+		w := httptest.NewRecorder()
+		handler("token", root, false).ServeHTTP(w, req)
+		return w
+	}
+	if w := request("sample.jar", "bad", data); w.Code != 403 {
+		t.Fatal(w.Code)
+	}
+	if w := request("sample.jar", "token", data); w.Code != 200 {
+		t.Fatal(w.Code, w.Body.String())
+	}
+	if w := request("sample.jar", "token", data); w.Code != 409 {
+		t.Fatal(w.Code)
+	}
+	if w := request("broken.jar", "token", []byte("bad")); w.Code != 400 {
+		t.Fatal(w.Code)
+	}
+	got, err := os.ReadFile(filepath.Join(root, "mods", "sample.jar"))
+	if err != nil || !bytes.Equal(got, data) {
+		t.Fatal(err)
 	}
 }
