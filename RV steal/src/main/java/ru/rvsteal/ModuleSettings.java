@@ -11,6 +11,7 @@ final class ModuleSettings {
     }
     static final Esp players = new Esp(), mobs = new Esp();
     static boolean playerLegit = true, mobLegit = true, blockEsp, nightVision;
+    static boolean watermark = true, hotkeysHud = true, potionsHud = true, staffHud = true;
     static int blockRange = 16;
     static String blocks = "minecraft:chest,minecraft:spawner,minecraft:diamond_ore,minecraft:deepslate_diamond_ore";
     static final Map<String, Integer> binds = new HashMap<>();
@@ -18,6 +19,10 @@ final class ModuleSettings {
 
     static void load(Properties p) {
         binds.clear();
+        watermark = Boolean.parseBoolean(p.getProperty("watermark", "true"));
+        hotkeysHud = Boolean.parseBoolean(p.getProperty("hotkeysHud", "true"));
+        potionsHud = Boolean.parseBoolean(p.getProperty("potionsHud", "true"));
+        staffHud = Boolean.parseBoolean(p.getProperty("staffHud", "true"));
         playerLegit = Boolean.parseBoolean(p.getProperty("playerLegit", "true"));
         mobLegit = Boolean.parseBoolean(p.getProperty("mobLegit", "true"));
         blockEsp = Boolean.parseBoolean(p.getProperty("blockEsp", "false"));
@@ -43,6 +48,10 @@ final class ModuleSettings {
         catch (NumberFormatException ignored) { return fallback; }
     }
     static void store(Properties p) {
+        p.setProperty("watermark", "" + watermark);
+        p.setProperty("hotkeysHud", "" + hotkeysHud);
+        p.setProperty("potionsHud", "" + potionsHud);
+        p.setProperty("staffHud", "" + staffHud);
         p.setProperty("playerLegit", "" + playerLegit); p.setProperty("mobLegit", "" + mobLegit);
         p.setProperty("blockEsp", "" + blockEsp); p.setProperty("nightVision", "" + nightVision);
         p.setProperty("blockRange", "" + blockRange); p.setProperty("blocks", blocks);

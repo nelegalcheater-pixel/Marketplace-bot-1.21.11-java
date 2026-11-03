@@ -57,8 +57,8 @@ final class HudCache {
     static void render(GuiGraphics graphics) {
         var client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.level != level) return;
-        if (RvSteal.coordinatesHud) graphics.drawString(client.font, coordinates, 8, 8, 0xffffffff);
-        if (RvSteal.healthHud) graphics.drawString(client.font, health, 8, RvSteal.coordinatesHud ? 19 : 8, 0xffff8c9f);
+        if (RvSteal.coordinatesHud) graphics.drawString(client.font, coordinates, 8, 35, 0xffffffff);
+        if (RvSteal.healthHud) graphics.drawString(client.font, health, 8, RvSteal.coordinatesHud ? 46 : 35, 0xffff8c9f);
         if (RvSteal.armorHud) {
             int x = Math.max(0, graphics.guiWidth() - 80), y = 8;
             for (var item : armor) {
@@ -68,8 +68,10 @@ final class HudCache {
             }
         }
         if (RvSteal.betterNear) {
-            graphics.drawString(client.font, "Better Near", 8, 32, 0xffff6c24);
-            int y = 44;
+            int y = ScreenHud.leftBottom();
+            if (y > graphics.guiHeight() - 24) return;
+            graphics.drawString(client.font, "Better Near", 8, y, 0xffff6c24);
+            y += 12;
             for (String line : nearby) {
                 if (y > graphics.guiHeight() - 40) break;
                 graphics.drawString(client.font, line, 8, y, 0xffffffff);

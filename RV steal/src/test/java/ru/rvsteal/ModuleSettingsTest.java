@@ -9,6 +9,7 @@ public final class ModuleSettingsTest {
     @org.junit.Test
     public void settingsRoundTrip() {
         var saved = new Properties();
+        ModuleSettings.watermark = false; ModuleSettings.potionsHud = false;
         ModuleSettings.playerLegit = false; ModuleSettings.mobLegit = true;
         ModuleSettings.blockEsp = true; ModuleSettings.nightVision = true;
         ModuleSettings.blockRange = 24; ModuleSettings.blocks = "minecraft:chest,minecraft:spawner";
@@ -20,6 +21,7 @@ public final class ModuleSettingsTest {
         require(ModuleSettings.binds.isEmpty(), "Reload must discard removed binds");
         require(ModuleSettings.playerLegit && !ModuleSettings.blockEsp && !ModuleSettings.nightVision, "Safe defaults");
         ModuleSettings.load(saved);
+        require(!ModuleSettings.watermark && !ModuleSettings.potionsHud && ModuleSettings.staffHud, "HUD visibility round trip");
         require(!ModuleSettings.playerLegit && ModuleSettings.mobLegit, "Independent aura modes");
         require(ModuleSettings.blockEsp && ModuleSettings.nightVision && ModuleSettings.blockRange == 24, "Vision settings round trip");
         require(ModuleSettings.blocks.equals("minecraft:chest,minecraft:spawner"), "Custom block IDs round trip");

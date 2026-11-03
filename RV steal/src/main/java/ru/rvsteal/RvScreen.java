@@ -1,6 +1,8 @@
 package ru.rvsteal;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import java.util.Locale;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -13,10 +15,14 @@ final class RvScreen extends Screen {
     private static final String[] CATEGORIES = {"COMBAT", "PVE", "VISUAL", "UTILITY"};
     private int category;
     private int scroll;
+    private String query = "";
+    private EditBox search;
 
     RvScreen() { super(Component.literal("KillerKC2 client")); }
 
-    private List<Module> modules() { return categoryModules(category); }
+    private List<Module> modules() {
+        return (query.isBlank() ? categoryModules(category) : allModules()).stream().filter(m -> m.name().toLowerCase(Locale.ROOT).contains(query.toLowerCase(Locale.ROOT))).toList();
+    }
     static List<Module> allModules() {
         var list = new java.util.ArrayList<Module>();
         for (int i = 0; i < 4; i++) list.addAll(categoryModules(i));
@@ -33,6 +39,10 @@ final class RvScreen extends Screen {
                 new Module("Auto Tool", "Выбор инструмента из хотбара", () -> RvSteal.autoTool, v -> RvSteal.autoTool = v),
                 new Module("Auto Respawn", "Возрождение после смерти", () -> RvSteal.autoRespawn, v -> RvSteal.autoRespawn = v));
             case 2 -> List.of(
+                new Module("Watermark", "Имя клиента, FPS и ping", () -> ModuleSettings.watermark, v -> ModuleSettings.watermark = v),
+                new Module("Hotkeys HUD", "Включённые модули с биндом", () -> ModuleSettings.hotkeysHud, v -> ModuleSettings.hotkeysHud = v),
+                new Module("Potions HUD", "Активные эффекты и время", () -> ModuleSettings.potionsHud, v -> ModuleSettings.potionsHud = v),
+                new Module("Staffs HUD", "Ранги staff/admin/mod из TAB", () -> ModuleSettings.staffHud, v -> ModuleSettings.staffHud = v),
                 new Module("Block ESP", "Выбранные блоки сквозь стены", () -> ModuleSettings.blockEsp, v -> ModuleSettings.blockEsp = v),
                 new Module("Night Vision", "Клиентское ночное зрение", () -> ModuleSettings.nightVision, v -> ModuleSettings.nightVision = v),
                 new Module("Player ESP", "Подсветка загруженных игроков", () -> RvSteal.playerEsp, v -> RvSteal.playerEsp = v),
@@ -47,71 +57,82 @@ final class RvScreen extends Screen {
                 new Module("Bunny Hop", "Прыжки при движении вперёд", () -> RvSteal.bunnyHop, v -> RvSteal.bunnyHop = v));
         };
     }
-    private int left() { return Math.max(4, (width - Math.min(440, width - 8)) / 2); }
-    private int top() { return Math.max(4, (height - Math.min(300, height - 8)) / 2); }
-    private int panelWidth() { return Math.min(440, width - 8); }
-    private int panelHeight() { return Math.min(300, height - 8); }
-    private int visibleRows() { return Math.max(1, (panelHeight() - 66) / 36); }
-    private int maxScroll() { return Math.max(0, modules().size() - visibleRows()); }
-
-    @Override public void render(GuiGraphics g, int mouseX, int mouseY, float delta) {
-        int x = left(), y = top(), w = panelWidth(), h = panelHeight();
-        g.fill(0, 0, width, height, 0xb0000000);
-        g.fill(x, y, x + w, y + h, 0xf2181a26);
-        g.fill(x, y, x + w, y + 2, 0xffa765fa);
-        g.fill(x, y + 36, x + 104, y + h, 0xff11131c);
-        g.drawString(font, "KILLERKC2", x + 14, y + 12, 0xffe4dbff);
-        g.drawString(font, "CLIENT", x + 92, y + 12, 0xffa765fa);
-        g.drawString(font, "ПКМ: настройки", x + w - 105, y + 12, 0xff777b91);
-        for (int i = 0; i < CATEGORIES.length; i++) {
-            int ty = y + 46 + i * 27;
-            if (i == category) { g.fill(x + 5, ty - 4, x + 99, ty + 17, 0xff29243c); g.fill(x + 5, ty - 4, x + 7, ty + 17, 0xffab6cff); }
-            g.drawString(font, CATEGORIES[i], x + 14, ty + 2, i == category ? 0xffd9bdff : 0xff8d91a7);
+    private int panelWidth() { return Math.min(540, width - 8); }
+    private int panelHeight() { return Math.min(340, height - 8); }
+    private int left() { return (width - panelWidth()) / 2; }
+    private int top() { return (height - panelHeight()) / 2; }
+    private int sidebar() { return Math.min(108, panelWidth() / 3); }
+    private int columns() { return panelWidth() >= 400 ? 2 : 1; }
+    private int cardWidth() { return (panelWidth() - sidebar() - 24) / columns() - 4; }
+    private int visibleRows() { return Math.max(1, (panelHeight() - 66) / 65); }
+    private int maxScroll() { return Math.max(0, (modules().size() + columns() - 1) / columns() - visibleRows()); }
+    @Override protected void init() {
+        if (!AccessKey.unlocked()) { minecraft.setScreen(new ActivationScreen()); return; }
+        search = new EditBox(font, left() + sidebar() + 12, top() + 10, panelWidth() - sidebar() - 24, 18, Component.literal("Search modules"));
+        search.setBordered(false); search.setHint(Component.literal("Search...")); search.setMaxLength(64); search.setValue(query);
+        search.setResponder(value -> { query = value; scroll = 0; });
+        addRenderableWidget(search);
+    }
+    @Override public void render(GuiGraphics g, int mx, int my, float delta) {
+        int x = left(), y = top(), w = panelWidth(), h = panelHeight(), side = sidebar();
+        g.fill(0, 0, width, height, 0x40090b10);
+        Ui.round(g, x - 2, y - 2, w + 4, h + 4, 11, 0x552b253f);
+        Ui.round(g, x, y, w, h, 10, 0xf020262c);
+        Ui.round(g, x, y, side, h, 10, 0xf014191e);
+        g.drawString(font, "K", x + 16, y + 16, 0xffbcb3ff);
+        g.drawString(font, "CLIENT", x + 31, y + 16, 0xffdadce5);
+        g.drawString(font, "Main", x + 12, y + 43, 0xff666f7a);
+        String[] names = {"Combat", "PvE", "Render", "Movement"};
+        for (int i = 0; i < names.length; i++) {
+            int ty = y + 60 + i * 29;
+            if (category == i) Ui.round(g, x + 7, ty - 5, side - 14, 23, 5, 0xff0f1419);
+            g.drawString(font, names[i], x + 15, ty + 1, category == i ? 0xfff1f1fa : 0xff929aa6);
         }
-        g.drawString(font, CATEGORIES[category], x + 117, y + 44, 0xffd9bdff);
-        int available = visibleRows();
-        List<Module> list = modules();
-        for (int i = 0; i < available && i + scroll < list.size(); i++) {
-            Module module = list.get(i + scroll);
-            int ry = y + 61 + i * 36;
-            int rx = x + 113, right = x + w - 11;
-            boolean hover = mouseX >= rx && mouseX < right && mouseY >= ry && mouseY < ry + 31;
-            g.fill(rx, ry, right, ry + 31, hover ? 0xff303344 : 0xff232632);
-            g.drawString(font, module.name(), rx + 8, ry + 4, 0xfff1f1f8);
-            if (w >= 360) g.drawString(font, module.detail(), rx + 8, ry + 17, 0xff9297a9);
-            g.fill(right - 30, ry + 8, right - 6, ry + 22, module.get().getAsBoolean() ? 0xff9d65ed : 0xff494d5e);
-            int knob = module.get().getAsBoolean() ? right - 15 : right - 28;
-            g.fill(knob, ry + 10, knob + 7, ry + 20, 0xfff6f3ff);
+        g.drawString(font, "KillerKC2", x + 12, y + h - 31, 0xffe5e1f8);
+        g.drawString(font, "ADMIN / lifetime", x + 12, y + h - 18, 0xff8c83bd);
+        Ui.round(g, x + side + 7, y + 6, w - side - 14, 25, 7, 0xff171d23);
+        var list = modules();
+        for (int row = 0; row < visibleRows(); row++) for (int col = 0; col < columns(); col++) {
+            int index = (scroll + row) * columns() + col;
+            if (index >= list.size()) continue;
+            var m = list.get(index);
+            int rx = x + side + 10 + col * (cardWidth() + 8), ry = y + 42 + row * 65, cw = cardWidth();
+            Ui.round(g, rx, ry, cw, 58, 6, 0xff191f25);
+            g.drawString(font, font.plainSubstrByWidth(m.name(), cw - 12), rx + 6, ry + 6, 0xffb9bdc8);
+            g.drawString(font, "Active", rx + 6, ry + 24, 0xfff0f0f6);
+            boolean enabled = m.get().getAsBoolean();
+            Ui.round(g, rx + cw - 30, ry + 22, 23, 12, 6, enabled ? 0xffa69bf1 : 0xff515862);
+            Ui.round(g, rx + cw - (enabled ? 17 : 28), ry + 23, 10, 10, 5, 0xffececf8);
+            g.drawString(font, "ПКМ: настройки", rx + 6, ry + 43, 0xff686f7e);
         }
-        if (maxScroll() > 0) g.drawString(font, "Колесо мыши  " + (scroll + 1) + "/" + (maxScroll() + 1), x + 117, y + h - 12, 0xff777b91);
+        if (list.isEmpty()) g.drawString(font, "Ничего не найдено", x + side + 14, y + 48, 0xff989fac);
+        if (maxScroll() > 0) g.drawString(font, (scroll + 1) + " / " + (maxScroll() + 1) + "  scroll", x + side + 14, y + h - 12, 0xff727b8a);
+        super.render(g, mx, my, delta);
     }
     @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() != 0 && event.button() != 1) return super.mouseClicked(event, doubleClick);
-        double mx = event.x(), my = event.y();
+        if (super.mouseClicked(event, doubleClick)) return true;
+        if (event.button() != 0 && event.button() != 1) return false;
         int x = left(), y = top();
-        if (event.button() == 0 && mx >= x + 5 && mx < x + 99) {
-            for (int i = 0; i < CATEGORIES.length; i++) {
-                int ty = y + 42 + i * 27;
-                if (my >= ty && my < ty + 21) { category = i; scroll = 0; return true; }
+        if (event.button() == 0 && event.x() >= x + 7 && event.x() < x + sidebar() - 7) {
+            for (int i = 0; i < 4; i++) if (event.y() >= y + 55 + i * 29 && event.y() < y + 78 + i * 29) {
+                category = i; scroll = 0; search.setValue(""); return true;
             }
         }
-        if (mx >= x + 113 && mx < x + panelWidth() - 11) {
-            for (int i = 0; i < visibleRows() && i + scroll < modules().size(); i++) {
-                int ry = y + 61 + i * 36;
-                if (my >= ry && my < ry + 31) {
-                    Module module = modules().get(i + scroll);
-                    if (event.button() == 1) { minecraft.setScreen(new SettingsScreen(this, module)); return true; }
-                    module.set().accept(!module.get().getAsBoolean());
-                    RvSteal.save();
-                    return true;
-                }
-            }
+        var list = modules();
+        for (int row = 0; row < visibleRows(); row++) for (int col = 0; col < columns(); col++) {
+            int index = (scroll + row) * columns() + col;
+            if (index >= list.size()) continue;
+            int rx = x + sidebar() + 10 + col * (cardWidth() + 8), ry = y + 42 + row * 65;
+            if (event.x() < rx || event.x() >= rx + cardWidth() || event.y() < ry || event.y() >= ry + 58) continue;
+            var module = list.get(index);
+            if (event.button() == 1) minecraft.setScreen(new SettingsScreen(this, module));
+            else { module.set().accept(!module.get().getAsBoolean()); RvSteal.save(); }
+            return true;
         }
-        return super.mouseClicked(event, doubleClick);
+        return false;
     }
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
-        scroll = Math.clamp(scroll - (int) Math.signum(vertical), 0, maxScroll());
-        return true;
+        scroll = Math.clamp(scroll - (int)Math.signum(vertical), 0, maxScroll()); return true;
     }
     @Override public boolean isPauseScreen() { return false; }
 }
