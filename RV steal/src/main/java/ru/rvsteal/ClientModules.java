@@ -10,10 +10,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 
 final class ClientModules {
-    private static int deathTicks;
+    static LivingEntity target;
+    private static int deathTicks, totemCooldown;
     private static Double previousGamma;
 
     static void tick(Minecraft client) {
+        target = null;
         if (RvSteal.bright && previousGamma == null) {
             previousGamma = client.options.gamma().get();
             client.options.gamma().set(1.0);
@@ -34,6 +36,16 @@ final class ClientModules {
         if (RvSteal.bunnyHop && player.onGround() && player.input.keyPresses.forward()
                 && !player.isShiftKeyDown() && !player.isPassenger()) player.jumpFromGround();
         if (client.gameMode == null) return;
+        if (totemCooldown > 0) totemCooldown--;
+        if (ModuleSettings.autoTotem && totemCooldown == 0 && player.containerMenu == player.inventoryMenu
+                && player.inventoryMenu.getCarried().isEmpty() && !player.isUsingItem()
+                && !player.getOffhandItem().is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING)) {
+            for (int i = 0; i < 36; i++) if (player.getInventory().getItem(i).is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING)) {
+                client.gameMode.handleInventoryMouseClick(player.inventoryMenu.containerId, i < 9 ? i + 36 : i,
+                        40, net.minecraft.world.inventory.ClickType.SWAP, player);
+                totemCooldown = 10; break;
+            }
+        }
         if (RvSteal.autoTool && client.options.keyAttack.isDown() && client.hitResult instanceof BlockHitResult hit
                 && !player.isUsingItem()) {
             var state = client.level.getBlockState(hit.getBlockPos());
@@ -47,7 +59,7 @@ final class ClientModules {
             inventory.setSelectedSlot(best);
         }
         if (player.isUsingItem() || client.gameMode.isDestroying()) return;
-        LivingEntity target = null;
+
         if (client.crosshairPickEntity instanceof LivingEntity aimed
                 && ((RvSteal.attackPlayers && aimed instanceof Player) || (RvSteal.attackMobs && aimed instanceof Enemy))) target = aimed;
         if (target == null && (RvSteal.playerAura || RvSteal.mobAura)) {

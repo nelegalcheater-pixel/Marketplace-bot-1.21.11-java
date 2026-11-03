@@ -3,6 +3,35 @@ import java.util.Properties;
 
 /** Runs without a game session; checks the on-disk settings contract. */
 public final class ModuleSettingsTest {
+    @org.junit.Test
+    public void customAppearanceRoundTripAndBounds() {
+        var p = new Properties();
+        ModuleSettings.load(p);
+        ModuleSettings.players.color = 0x123456; ModuleSettings.players.textColor = 0x12abef;
+        ModuleSettings.players.outlineColor = 0xffeeaa; ModuleSettings.players.thickness = 3;
+        ModuleSettings.players.fill = 90; ModuleSettings.players.scale = 175; ModuleSettings.players.padding = 8;
+        ModuleSettings.players.corners = true; ModuleSettings.players.tracers = true;
+        ModuleSettings.players.distance = true; ModuleSettings.players.background = false;
+        ModuleSettings.worldTheme = true; ModuleSettings.ambientParticles = true; ModuleSettings.itemEsp = true;
+        ModuleSettings.skyColor = 0xabcdef; ModuleSettings.particleStyle = 2;
+        ModuleSettings.store(p); ModuleSettings.load(new Properties()); ModuleSettings.load(p);
+        require(ModuleSettings.players.color == 0x123456 && ModuleSettings.players.textColor == 0x12abef
+            && ModuleSettings.players.outlineColor == 0xffeeaa, "Arbitrary RGB colors round trip");
+        require(ModuleSettings.players.thickness == 3 && ModuleSettings.players.fill == 90
+            && ModuleSettings.players.scale == 175 && ModuleSettings.players.padding == 8, "Sizing round trip");
+        require(ModuleSettings.players.corners && ModuleSettings.players.tracers && ModuleSettings.players.distance
+            && !ModuleSettings.players.background && !ModuleSettings.mobs.corners, "Independent appearance settings");
+        require(ModuleSettings.worldTheme && ModuleSettings.ambientParticles && ModuleSettings.itemEsp
+            && ModuleSettings.skyColor == 0xabcdef && ModuleSettings.particleStyle == 2, "World visuals round trip");
+        p.setProperty("players.color", "ZZZZZZ"); p.setProperty("players.scale", "5000");
+        p.setProperty("players.thickness", "-5"); p.setProperty("players.fill", "999");
+        p.setProperty("particleDensity", "999"); p.setProperty("particleStyle", "-1");
+        ModuleSettings.load(p);
+        require(ModuleSettings.players.color == 0xc58cff && ModuleSettings.players.scale == 200
+            && ModuleSettings.players.thickness == 1 && ModuleSettings.players.fill == 150, "Appearance validation");
+        require(ModuleSettings.particleDensity == 5 && ModuleSettings.particleStyle == 0, "Particle budget bounds");
+        ModuleSettings.load(new Properties());
+    }
     private static void require(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
     }

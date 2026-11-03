@@ -19,6 +19,7 @@ import java.util.Properties;
 public final class RvSteal implements ClientModInitializer {
     private static final Path CONFIG = FabricLoader.getInstance().getConfigDir().resolve("rvsteal.properties");
     public static boolean nightVisionEnabled() { return AccessKey.unlocked() && ModuleSettings.nightVision; }
+    public static boolean noHurtCamEnabled() { return AccessKey.unlocked() && ModuleSettings.noHurtCam; }
     static boolean betterNear;
     static boolean armorHud;
     static boolean coordinatesHud;
@@ -41,6 +42,7 @@ public final class RvSteal implements ClientModInitializer {
             ModuleSettings.tickBinds(client);
             EspOverlay.tick(client);
             ClientModules.tick(client);
+            WorldVisuals.tick(client);
             HudCache.tick(client);
         });
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,

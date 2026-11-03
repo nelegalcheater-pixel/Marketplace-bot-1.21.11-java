@@ -55,6 +55,29 @@ final class ScreenHud {
         if (ModuleSettings.hotkeysHud) { panel(g, "Hotkeys", hotkeys, 8, leftBottom); leftBottom += 30 + Math.min(5, hotkeys.size()) * 12; }
         if (ModuleSettings.potionsHud) { panel(g, "Potions", potions, 8, leftBottom); leftBottom += 30 + Math.min(5, potions.size()) * 12; }
         if (ModuleSettings.staffHud) panel(g, "Staffs [TAB rank]", staffs, Math.max(8, g.guiWidth() - 188), 72);
+        if (ModuleSettings.targetHud) renderTarget(g, c);
+    }
+    private static void renderTarget(GuiGraphics g, Minecraft c) {
+        var target = ClientModules.target;
+        if (target == null && c.crosshairPickEntity instanceof net.minecraft.world.entity.LivingEntity entity) target = entity;
+        if (target == null || target.isRemoved() || !target.isAlive()) return;
+        int x = Math.max(4, g.guiWidth() / 2 + 20), y = Math.max(4, g.guiHeight() / 2 + 20);
+        int w = Math.min(150, g.guiWidth() - x - 4);
+        if (w < 40 || y + 62 > g.guiHeight()) return;
+        Ui.round(g, x, y, w, 60, 6, 0xd0192029);
+        g.drawString(c.font, c.font.plainSubstrByWidth(target.getName().getString(), w - 12), x + 6, y + 5, 0xffe8dafa);
+        float hp = Math.clamp(target.getHealth() / Math.max(1, target.getMaxHealth()), 0, 1);
+        g.drawString(c.font, String.format(Locale.ROOT, "HP %.1f / %.1f", target.getHealth(), target.getMaxHealth()), x + 6, y + 16, 0xffd7d7e9);
+        g.fill(x + 6, y + 28, x + w - 6, y + 31, 0xff404451);
+        g.fill(x + 6, y + 28, x + 6 + Math.round((w - 12) * hp), y + 31, 0xffa89afa);
+        int ix = x + 6;
+        for (var slot : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD,
+                net.minecraft.world.entity.EquipmentSlot.CHEST, net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) {
+            var stack = target.getItemBySlot(slot);
+            if (!stack.isEmpty()) { g.renderItem(stack, ix, y + 35); ix += 18; }
+        }
+        String effects = target.getActiveEffects().stream().map(e -> Component.translatable(e.getDescriptionId()).getString()).limit(2).reduce((a, b) -> a + ", " + b).orElse("");
+        if (!effects.isEmpty()) g.drawString(c.font, c.font.plainSubstrByWidth(effects, w - 12), x + 6, y + 51, 0xffc1b5d9);
     }
     private static void panel(GuiGraphics g, String title, List<String> lines, int x, int y) {
         var font = Minecraft.getInstance().font;

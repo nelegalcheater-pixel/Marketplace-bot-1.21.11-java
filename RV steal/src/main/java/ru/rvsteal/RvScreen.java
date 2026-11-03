@@ -31,6 +31,7 @@ final class RvScreen extends Screen {
     private static List<Module> categoryModules(int category) {
         return switch (category) {
             case 0 -> List.of(
+                new Module("Auto Totem", "Тотем из инвентаря во вторую руку", () -> ModuleSettings.autoTotem, v -> ModuleSettings.autoTotem = v),
                 new Module("Player Aura", "Атака ближайшего игрока", () -> RvSteal.playerAura, v -> RvSteal.playerAura = v),
                 new Module("Trigger PvP", "Атака игрока под прицелом", () -> RvSteal.attackPlayers, v -> RvSteal.attackPlayers = v));
             case 1 -> List.of(
@@ -43,6 +44,11 @@ final class RvScreen extends Screen {
                 new Module("Hotkeys HUD", "Включённые модули с биндом", () -> ModuleSettings.hotkeysHud, v -> ModuleSettings.hotkeysHud = v),
                 new Module("Potions HUD", "Активные эффекты и время", () -> ModuleSettings.potionsHud, v -> ModuleSettings.potionsHud = v),
                 new Module("Staffs HUD", "Ранги staff/admin/mod из TAB", () -> ModuleSettings.staffHud, v -> ModuleSettings.staffHud = v),
+                new Module("Target HUD", "Здоровье, броня и эффекты цели", () -> ModuleSettings.targetHud, v -> ModuleSettings.targetHud = v),
+                new Module("No Hurt Cam", "Отключает качание камеры при уроне", () -> ModuleSettings.noHurtCam, v -> ModuleSettings.noHurtCam = v),
+                new Module("World Theme", "Цвета неба, облаков и тумана", () -> ModuleSettings.worldTheme, v -> ModuleSettings.worldTheme = v),
+                new Module("Ambient Particles", "Частицы вокруг игрока", () -> ModuleSettings.ambientParticles, v -> ModuleSettings.ambientParticles = v),
+                new Module("Item ESP", "Название и количество дропа", () -> ModuleSettings.itemEsp, v -> ModuleSettings.itemEsp = v),
                 new Module("Block ESP", "Выбранные блоки сквозь стены", () -> ModuleSettings.blockEsp, v -> ModuleSettings.blockEsp = v),
                 new Module("Night Vision", "Клиентское ночное зрение", () -> ModuleSettings.nightVision, v -> ModuleSettings.nightVision = v),
                 new Module("Player ESP", "Подсветка загруженных игроков", () -> RvSteal.playerEsp, v -> RvSteal.playerEsp = v),
