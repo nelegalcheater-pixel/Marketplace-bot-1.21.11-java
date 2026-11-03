@@ -29,9 +29,9 @@ final class EspOverlay {
     private static Set<Block> selected = Set.of();
     private static Object level;
     private static BlockPos origin;
-    private static int cursor, ticks, scanRange;
+    private static int cursor, ticks, scanRange, scanPause;
     private static List<BlockPos> scanOffsets = List.of();
-    static void resetBlocks() { found.clear(); origin = null; cursor = 0; selected = Set.of(); }
+    static void resetBlocks() { found.clear(); origin = null; cursor = 0; scanPause = 0; selected = Set.of(); }
 
     static void tick(Minecraft c) {
         if (c.level != level) { level = c.level; entities.clear(); resetBlocks(); ticks = 0; }
@@ -76,10 +76,11 @@ final class EspOverlay {
             offsets.sort(Comparator.comparingDouble(pos -> pos.distSqr(BlockPos.ZERO)));
             scanOffsets = offsets; origin = null; cursor = 0; found.clear();
         }
-        if (origin == null || origin.distSqr(c.player.blockPosition()) > 16) { origin = c.player.blockPosition(); cursor = 0; found.clear(); }
-        found.removeIf(pos -> !c.level.hasChunkAt(pos) || pos.distSqr(c.player.blockPosition()) > r * r || !selected.contains(c.level.getBlockState(pos).getBlock()));
+        if (origin == null || origin.distSqr(c.player.blockPosition()) > 16) { origin = c.player.blockPosition(); cursor = 0; scanPause = 0; found.clear(); }
+        if (ticks % 5 == 0) found.removeIf(pos -> !c.level.hasChunkAt(pos) || pos.distSqr(c.player.blockPosition()) > r * r || !selected.contains(c.level.getBlockState(pos).getBlock()));
+        if (scanPause-- > 0) return;
         for (int budget = 0; budget < 4096; budget++) {
-            if (cursor >= scanOffsets.size()) { cursor = 0; break; }
+            if (cursor >= scanOffsets.size()) { cursor = 0; scanPause = 20; break; }
             BlockPos pos = origin.offset(scanOffsets.get(cursor++));
             if (c.level.hasChunkAt(pos) && selected.contains(c.level.getBlockState(pos).getBlock()) && found.size() < 512) found.add(pos);
         }

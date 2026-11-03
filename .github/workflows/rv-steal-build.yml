@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - 'RV steal/**'
+      - 'launcher/**'
       - '.github/workflows/rv-steal-build.yml'
   pull_request:
     paths:
       - 'RV steal/**'
+      - 'launcher/**'
       - '.github/workflows/rv-steal-build.yml'
 jobs:
   build:
@@ -18,13 +20,21 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.3'
+          cache: false
       - name: Build
-        working-directory: 'RV steal'
-        run: ./gradlew build --no-daemon
+        run: bash launcher/build.sh
       - uses: actions/upload-artifact@v4
         with:
           name: killerkc2-client
           path: |
             RV steal/build/libs/*.jar
             !RV steal/build/libs/*-sources.jar
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: killerkc2-windows-launcher
+          path: launcher/KillerKC2-Launcher.exe
           if-no-files-found: error

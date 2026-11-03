@@ -26,6 +26,7 @@ final class ModuleSettings {
 
     static void load(Properties p) {
         binds.clear();
+        CustomFunctions.load(p);
         pearlTrails = Boolean.parseBoolean(p.getProperty("pearlTrails", "false"));
         itemPhysics = Boolean.parseBoolean(p.getProperty("itemPhysics", "false"));
         hitboxes = Boolean.parseBoolean(p.getProperty("hitboxes", "false"));
@@ -88,6 +89,7 @@ final class ModuleSettings {
     }
     static String hex(int color) { return String.format(Locale.ROOT, "%06X", color & 0xffffff); }
     static void store(Properties p) {
+        CustomFunctions.store(p);
         p.setProperty("pearlTrails", "" + pearlTrails); p.setProperty("itemPhysics", "" + itemPhysics);
         p.setProperty("hitboxes", "" + hitboxes); p.setProperty("hitboxSize", "" + hitboxSize);
         p.setProperty("targetHud", "" + targetHud);
@@ -121,6 +123,7 @@ final class ModuleSettings {
         binds.forEach((key, value) -> p.setProperty("bind." + key, "" + value));
     }
     static void tickBinds(Minecraft client) {
+        if (binds.isEmpty()) { held.clear(); return; }
         Set<Integer> now = new HashSet<>();
         for (int key : binds.values()) if (InputConstants.isKeyDown(client.getWindow(), key)) now.add(key);
         if (client.screen == null && client.player != null) {

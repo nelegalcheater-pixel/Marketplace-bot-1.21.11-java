@@ -52,6 +52,11 @@ final class SettingsScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal(binding ? "Нажми клавишу; Esc — отмена" : "Бинд: " + keyName()), b -> { binding = true; rebuildWidgets(); })
                 .bounds(x, y + 24, 260, 20).build());
         String name = module.name();
+        if (CustomFunctions.functions.containsKey(name)) {
+            var f = CustomFunctions.functions.get(name);
+            for (var action : RvScreen.baseModules()) if (f.actions().contains(action.name()))
+                button("Настройки: " + action.name(), () -> minecraft.setScreen(new SettingsScreen(this, action)));
+        }
         if (name.equals("Hitboxes")) {
             button("Добавить к каждой стороне: " + String.format(Locale.ROOT, "%.1f", ModuleSettings.hitboxSize / 100.0) + " блоков", () -> ModuleSettings.hitboxSize = ModuleSettings.hitboxSize >= 300 ? 0 : ModuleSettings.hitboxSize + 10);
         }
